@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Threading;
-
 namespace ConsoleAppLogistic_1
 {
     class Program
@@ -11,9 +12,23 @@ namespace ConsoleAppLogistic_1
         public static int sum = 0;
         static void Main()
         {
+            // Ввод значения M
+            Console.Write("Укажите M >=100:");
+            string userString = Console.ReadLine();
+            M = Convert.ToInt32(userString);
+            if (M < 100)
+            {
+                throw new Exception("Введите корректное значение M");
+            }
 
-            ZnM(); //Ввод значения M
-            ZnN(); //Ввод значения n
+            // Ввод значения n
+            Console.Write("\nУкажите объём выпуска продукции в час >=50:");
+            string userString1 = Console.ReadLine();
+            n = Convert.ToInt32(userString1);
+            if (n < 50)
+            {
+                throw new Exception("Введите корректное значение объёма выпуска продукции в час");
+            }
 
             //Вместимость 1 грузовика
             Console.Write("Укажите вместимость 1 грузовика:");
@@ -33,128 +48,61 @@ namespace ConsoleAppLogistic_1
             int Sklad = M * sum;
 
             double workload = Convert.ToInt32(Sklad * 95 / 100); //Загруженность склада 95%
-
-            //количество рейсов
-            double VoyageTruck1 = Math.Ceiling(workload * 50 / 100 / Truck1);
-            double VoyageTruck2 = Math.Ceiling(workload * 50 / 100 / Truck2);
-
-            //сколько товаров перевезет грузовик
-            double Rote1 = Math.Round(workload * 50 / 100);
-            double Rote2 = workload - Rote1;
-
-            double Hours = Math.Ceiling(workload / sum); //время, за которое склад заполнится на 95%
-
-            //Тип и количество продукции на складе
-            double sum_a = Hours * a;
-            double sum_b = Hours * b;
-            double sum_c = Hours * c;
-
-            //Продукция, которую увозит 1 грузовик
-            double sum_a1 = Math.Ceiling(sum_a * 50 / 100);
-            double sum_b1 = Math.Ceiling(sum_b * 50 / 100);
-            double sum_c1 = Math.Ceiling(sum_c * 50 / 100);
-
-            //Продукция, которую увозит 2 грузовик
-            double sum_a2 = sum_a - sum_a1;
-            double sum_b2 = sum_b - sum_b1;
-            double sum_c2 = sum_c - sum_c1;
+            //сколько сырья перевезет грузовик
+            double VoyageTruck1 = Convert.ToInt32(workload * 50 / 100 / Truck1);
+            double VoyageTruck2 = Convert.ToInt32(workload * 50 / 100 / Truck2);
+            //за сколько заездов перевезет грузовик сырье
+            double Rote1 = Convert.ToInt32(workload * 50 / 100);
+            double Rote2 = Convert.ToInt32(workload * 50 / 100);
 
             Console.Write("\n\n\nПоследовательность поступления продукции на склад");
 
-            //поток A
-            Thread fabricA = new Thread(Product_a);
-            fabricA.Start();
+            // создаем первый поток и назначаем функцию - выпуск продукта_a 
+            Thread factory_a = new Thread(ReleaseProduct_a);
+            // запускаем первый поток
+            factory_a.Start();
             Thread.Sleep(TimeSpan.FromSeconds(1));
 
-            //поток B
-            Thread fabricB = new Thread(Product_b);
-            fabricB.Start();
+            // создаем второй поток и назначаем функцию - выпуск продукта_b
+            Thread factory_b = new Thread(ReleaseProduct_b);
+            // запускаем второй поток
+            factory_b.Start();
             Thread.Sleep(TimeSpan.FromSeconds(1));
 
-            //поток C
-            Thread fabricC = new Thread(Product_c);
-            fabricC.Start();
+            // создаем третий поток и назначаем функцию - выпуск продукта_c 
+            Thread factory_c = new Thread(ReleaseProduct_c);
+            // запускаем третий поток
+            factory_c.Start();
             Thread.Sleep(TimeSpan.FromSeconds(1));
 
-            // Вывод информации по складу
+            // далее выводятся расчётные данные по указанному условию задания
             Console.Write(string.Format("\n\nМаксимальная вместимость склада: {0} едениц продукции со всех фабрик", Sklad));
-            Console.Write(string.Format("\nЗаполняемость склада 95% - {0} едениц продукции", workload));
+            Console.Write(string.Format("\nПри заполнении склада на 95% - {0} едениц продукции, производится вывоз со склада двумя грузовиками", workload));
 
-            /*
-            Console.Write(string.Format("\nКоличество часов, за которое склад заполнится на 95%: {0} ч", Hours));
-            
-            Console.Write(string.Format("\nКоличество продукции a на складе: {0} единиц", sum_a));
-            Console.Write(string.Format("\nКоличество продукции b на складе: {0} единиц", sum_b));
-            Console.Write(string.Format("\nКоличество продукции c на складе: {0} единиц", sum_c));
-            */
+
 
             Console.Write(string.Format("\n\nСтатистика по 1 грузовику" +
                 "\nВместимость грузовика: {0} едениц продукции" +  "\nКоличество рейсов: {1}" +
-             "\nПеревезёт {2} едениц товара, в том числе: продукт a - {3} единиц, продукт b - {4} единиц, продукт c - {5} единиц", 
-             Truck1, VoyageTruck1, Rote1, sum_a1, sum_b1, sum_c1));
+             "\nПеревезёт {2} едениц товара, в том числе: продукт a - {3}, продукт b - {4}, продукт c - {5}", 
+             Truck1, VoyageTruck1, Rote1, a, b, c));
 
             Console.Write(string.Format("\n\nСтатистика по 2 грузовику" +
                 "\nВместимость грузовика: {0} едениц продукции" + "\nКоличество рейсов: {1}" +
-             "\nПеревезёт {2} едениц товара, в том числе: продукт a - {3} единиц, продукт b - {4} единиц, продукт c - {5} единиц",
-             Truck2, VoyageTruck2, Rote2, sum_a2, sum_b2, sum_c2));
+             "\nПеревезёт {2} едениц товара, в том числе: продукт a - {3}, продукт b - {4}, продукт c - {5}",
+             Truck2, VoyageTruck2, Rote2, a, b, c));
         }
-
-        public static void Product_a()
+        public static void ReleaseProduct_a()
         {
-            Console.WriteLine(string.Format("\nФабрика A. Продукт a. Количество продукции: {0} единиц продукции в час",  a));
+            Console.WriteLine(string.Format("\nФабрика A. выпускает  продукт a в размере {0} единиц продукции в час",  a));
         }
-        public static void Product_b()
+        public static void ReleaseProduct_b()
         {
-            Console.WriteLine(string.Format("Фабрика B. Продукт b. Количество продукции: {0} единиц продукции в час", b));
+            Console.WriteLine(string.Format("Фабрика B. выпускает продукт b в размере  {0} единиц продукции в час", b));
         }
-        public static void Product_c()
+        public static void ReleaseProduct_c()
         {
-            Console.WriteLine(string.Format("Фабрика C. Продукт c. Количество продукции: {0} единиц продукции в час", c));
+            Console.WriteLine(string.Format("Фабрика C. выпускает продукт c в размере  {0} единиц продукции в час", c));
             Console.ReadLine();
         }
-
-        private static void ZnM()
-        {
-            try
-            {
-                Console.Write("\nУкажите объём выпуска продукции в час >=100:");
-                string userString = Console.ReadLine();
-                M = Convert.ToInt32(userString);
-                if (M < 100)
-                {
-                    throw new Exception();
-                }
-            }
-            // Обработка исключения
-            catch (Exception)
-            {
-                Console.Write("Введите корректное значение M");
-                ZnM();
-            }
-        }
-
-        private static void ZnN()
-        {
-            try
-            {
-                Console.Write("\nУкажите объём выпуска продукции в час >=50:");
-                string userString1 = Console.ReadLine();
-                n = Convert.ToInt32(userString1);
-                if (n < 50)
-                {
-                    throw new Exception();
-                }
-            }
-            // Обработка исключения
-            catch (Exception)
-            {
-                Console.Write("Введите корректное значение объёма выпуска продукции в час");
-                ZnN();
-            }
-
-
-        }
-
-
     }
 }
